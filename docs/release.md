@@ -1,6 +1,6 @@
 # Public paper release
 
-The repository remains private during review. Prepared datasets and generated records stay excluded.
+The repository is public. Experimental validation and manuscript reconciliation remain in progress. Prepared datasets and generated records stay excluded.
 
 Before publishing a stable version:
 
@@ -9,7 +9,7 @@ Before publishing a stable version:
 3. Validate GPU inference and record model/tokenizer revisions.
 4. Recompute tables and figures; review numerical changes alongside the manuscript.
 5. Add final paper metadata, release version, and date to `CITATION.cff`.
-6. Confirm the repository may become public, then tag the reviewed commit, for example `v1.0.0`.
+6. Tag the reviewed commit as a stable release, for example `v1.0.0`.
 7. Connect the repository to Zenodo and archive the release, or upload its reviewed source archive. Add the assigned version DOI to the paper and citation metadata. No DOI is reserved or invented here.
 
 See [GitHub citation files](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-citation-files), [software archiving guidance](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content), and [Zenodo integration](https://help.zenodo.org/docs/github/enable-repository/).

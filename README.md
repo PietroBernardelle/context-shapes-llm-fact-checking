@@ -2,7 +2,7 @@
 
 Code, prompt templates, filler input, and figures for the paper by Pietro Bernardelle, Stefano Civelli, Kevin Roitero, and Gianluca Demartini.
 
-**Status: private release candidate.** CPU regression tests and execution commands are provided. Full GPU reruns and reconciliation of the manuscript results are pending. Read the [reproducibility notes](docs/reproducibility.md) before using this as an exact reproduction of the paper.
+**Status: public release candidate.** CPU regression tests and execution commands are provided. Full GPU reruns and reconciliation of the manuscript results are pending. Read the [reproducibility notes](docs/reproducibility.md) before using this as an exact reproduction of the paper.
 
 ## Installation
 
@@ -111,6 +111,6 @@ Both PNGs match every RGB pixel of the corresponding images embedded in the supp
 
 ## Citation and license
 
-See [CITATION.cff](CITATION.cff) and the [MIT license](LICENSE) for code and prompt templates. The Wikipedia-derived filler is separately licensed under [CC BY-SA 4.0](data/raw/filler/README.md). Dataset and model terms remain separate. No DOI or final publication identifier is claimed yet. [Release instructions](docs/release.md) describe the remaining steps toward a public, citable version.
+See [CITATION.cff](CITATION.cff) and the [MIT license](LICENSE) for code and prompt templates. The Wikipedia-derived filler is separately licensed under [CC BY-SA 4.0](data/raw/filler/README.md). Dataset and model terms remain separate. No DOI or final publication identifier is claimed yet. [Release instructions](docs/release.md) describe the remaining steps toward a stable, archived version.
 
 The original snapshot is commit `1e149ae04f7b7bff2dc45c2d2ebfda5e78e69f8d`. [CHANGELOG.md](CHANGELOG.md) identifies subsequent corrections.
