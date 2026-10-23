@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "Please cite this software when using the code. Paper publication metadata will be added when available."
+type: software
+version: 0.1.0-rc.1
+date-released: 2026-10-23
+title: "Context Shapes LLMs Retrieval-Augmented Fact-Checking Effectiveness: Code and Figures"
+authors:
+  - family-names: Bernardelle
+    given-names: Pietro
+    orcid: "https://orcid.org/0009-0003-3657-9229"
+  - family-names: Civelli
+    given-names: Stefano
+    orcid: "https://orcid.org/0009-0003-4982-9565"
+  - family-names: Roitero
+    given-names: Kevin
+    orcid: "https://orcid.org/0000-0002-9191-3280"
+  - family-names: Demartini
+    given-names: Gianluca
+    orcid: "https://orcid.org/0000-0002-7311-3693"
+repository-code: "https://github.com/PietroBernardelle/context-shapes-llm-fact-checking"
+url: "https://github.com/PietroBernardelle/context-shapes-llm-fact-checking"
+license: MIT
+keywords:
+  - fact-checking
+  - large language models
+  - evidence positioning
+  - retrieval-augmented generation

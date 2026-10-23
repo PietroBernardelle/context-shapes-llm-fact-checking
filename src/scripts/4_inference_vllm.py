@@ -5,19 +5,12 @@ import re
 import gc
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from vllm import LLM, SamplingParams
 
 import pandas as pd
-import torch
-
-from vllm import LLM, SamplingParams
-
-try:
-    # Newer vLLM versions
-    from vllm.sampling_params import GuidedDecodingParams
-except Exception:  # pragma: no cover - fallback for older versions
-    from vllm import GuidedDecodingParams
-
 from prompt_utils import project_root, load_prompt_config, ensure_parent_dir, format_position
 
 
@@ -113,7 +106,7 @@ def main() -> None:
     parser.add_argument(
         "--config",
         default=None,
-        help="Path to prompt_config.json (defaults to out/prompt_configs/prompt_config.json)",
+        help="Path to configuration (default: config/paper_config.json)",
     )
     parser.add_argument(
         "--models",
@@ -145,8 +138,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    import torch
+    from vllm import LLM, SamplingParams
+    try:
+        from vllm.sampling_params import GuidedDecodingParams
+    except ImportError:
+        from vllm import GuidedDecodingParams
+
     root = project_root()
-    config_path = Path(args.config) if args.config else root / "config" / "prompt_config.json"
+    config_path = Path(args.config) if args.config else root / "config" / "paper_config.json"
     config = load_prompt_config(config_path)
 
     # Decide which models to run.
@@ -239,11 +239,14 @@ def main() -> None:
                 "dtype": "auto",  
                 "max_num_seqs": 200,
                 "disable_log_stats": True,
-                "seed": 22,
+                "seed": config["inference"].get("seed", 22),
             }
             if length_val is not None:
                 llm_kwargs["max_model_len"] = length_val
 
+            if config["models"][model_name].get("revision"):
+                llm_kwargs["revision"] = config["models"][model_name]["revision"]
+                llm_kwargs["tokenizer_revision"] = config["models"][model_name]["revision"]
             llm = LLM(**llm_kwargs)
             tokenizer = llm.get_tokenizer()
 

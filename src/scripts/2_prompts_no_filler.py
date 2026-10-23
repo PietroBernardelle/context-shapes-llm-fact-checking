@@ -54,7 +54,7 @@ def main() -> None:
     parser.add_argument(
         "--config",
         default=None,
-        help="Path to prompt_config.json (defaults to config/prompt_config.json)",
+        help="Path to configuration (default: config/paper_config.json)",
     )
     parser.add_argument(
         "--evidence-order",
@@ -71,7 +71,7 @@ def main() -> None:
     args = parser.parse_args()
 
     root = project_root()
-    config_path = Path(args.config) if args.config else root / "config" / "prompt_config.json"
+    config_path = Path(args.config) if args.config else root / "config" / "paper_config.json"
     config = load_prompt_config(config_path)
 
     # Load the combined dataset and normalize evidence lists.

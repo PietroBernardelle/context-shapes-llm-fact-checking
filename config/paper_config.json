@@ -1,0 +1,96 @@
+{
+  "paths": {
+    "combined_df": "data/processed/experiment_subset_seed42.csv",
+    "filler_text": "data/raw/filler/llama.txt",
+    "prompts_dir": "out/prompts",
+    "results_dir": "out/results"
+  },
+  "prompt": {
+    "system_prompt": "You are a knowledgeable expert. You are able to use logic to construct a coherent reasoning and come to an answer. You are tasked with verifying claims found on the internet by assigning a label to each one of them. You have at your disposal several points of evidence and your job is to state if evidences supports or not the claim by assigning the correct label.\n\nThe possible labels to assign, according to evidences, are the following:\n0: Supports (evidences give information in support of the claim)\n1: Refutes (evidences give information in contrast to the claim)\n\nNever provide explanations for your answers. Your answers must always respect the format requested.\nYour answer must follow this format:\n{\"label\": 0/1}",
+    "user_template": "CLAIM: {claim}\n\nCONTEXT: {context}\n\nAnswer:",
+    "claim_only_template": "CLAIM: {claim}\n\nAnswer:"
+  },
+  "settings": {
+    "evidence_orders": [
+      "multi"
+    ],
+    "evidence_positions": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9,
+      1.0
+    ],
+    "filler_lengths": {
+      "Llama-3.1-8B-Instruct": [
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "Qwen2.5-7B-Instruct": [
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "Qwen3-8B": [
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "Qwen3-32B": [
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "Llama-3.1-70B-Instruct": [
+        2048,
+        4096,
+        8192,
+        16384
+      ]
+    }
+  },
+  "models": {
+    "Llama-3.1-8B-Instruct": {
+      "model_id": "meta-llama/Llama-3.1-8B-Instruct"
+    },
+    "Qwen2.5-7B-Instruct": {
+      "model_id": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "Qwen3-8B": {
+      "model_id": "Qwen/Qwen3-8B"
+    },
+    "Qwen3-32B": {
+      "model_id": "Qwen/Qwen3-32B"
+    },
+    "Llama-3.1-70B-Instruct": {
+      "model_id": "meta-llama/Llama-3.1-70B-Instruct"
+    }
+  },
+  "inference": {
+    "max_new_tokens": 16,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "seed": 22
+  },
+  "sampling": {
+    "seed": 42,
+    "hover_split": "dev",
+    "feverous_per_label": 2000
+  },
+  "expected_dataset_counts": {
+    "Hover": 4000,
+    "Feverous": 4000,
+    "ClimateFever": 907
+  }
+}

@@ -6,7 +6,7 @@ Steps:
 2) (Optional) Standardize datasets and write processed files.
 3) (Optional) Analyze processed datasets with summary stats and plots.
 
-Toggle the `RUN_*` flags in the Configuration section to control what runs.
+Select phases with --steps raw standardize combine (and optionally analyze).
 """
 
 # Suppress noisy warnings to keep output readable.
@@ -14,9 +14,9 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from pathlib import Path
+from argparse import ArgumentParser
 
 import pandas as pd
-from datasets import load_dataset
 from scipy import stats
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -36,10 +36,6 @@ PROCESSED_DIR = DATA_DIR / "processed"
 # Reproducible sampling.
 RANDOM_STATE = 42
 
-# Toggle each phase of the workflow.
-RUN_RAW_PROCESSING = True
-RUN_STANDARDIZATION = False
-RUN_ANALYSIS = False
 
 
 # ---------------------------------------------------------------------------
@@ -69,11 +65,14 @@ def process_climatefever_evidences(row: pd.Series) -> dict:
 # Phase 1: Raw dataset processing
 # ---------------------------------------------------------------------------
 
-def process_raw_datasets() -> None:
+def process_raw_datasets(raw_dir: Path, interim_dir: Path, climatefever_file: Path | None = None) -> None:
     # Define input paths.
-    feverous_path = RAW_DIR / "feverous.pqt"
-    hover_path = RAW_DIR / "hover.pqt"
-    climatefever_path = "climate_fever"
+    feverous_path = raw_dir / "feverous.pqt"
+    hover_path = raw_dir / "hover.pqt"
+    climatefever_path = "tdiggelm/climate_fever"
+    for path in [feverous_path, hover_path]:
+        if not path.is_file():
+            raise ValueError(f"Missing prepared input: {path}. See docs/data.md.")
 
     # Process Feverous dataset.
     df_feverous = pd.read_parquet(feverous_path)
@@ -85,7 +84,7 @@ def process_raw_datasets() -> None:
     df_feverous["len_evidences"] = df_feverous["clean_evidence"].apply(compute_len_evidence)
 
     # Save full cleaned Feverous.
-    feverous_out = INTERIM_DIR / "cleaned_feverous.csv"
+    feverous_out = interim_dir / "cleaned_feverous.csv"
     ensure_parent_dir(feverous_out)
     df_feverous.to_csv(feverous_out, index=False)
     print("Feverous processed")
@@ -100,14 +99,17 @@ def process_raw_datasets() -> None:
     df_hover["len_evidences"] = df_hover["clean_evidence"].apply(compute_len_evidence)
 
     # Save full cleaned Hover.
-    hover_out = INTERIM_DIR / "cleaned_hover.csv"
+    hover_out = interim_dir / "cleaned_hover.csv"
     ensure_parent_dir(hover_out)
     df_hover.to_csv(hover_out, index=False)
     print("Hover processed")
 
     # Process ClimateFever dataset from HuggingFace.
-    climatefever = load_dataset(climatefever_path, split="test")
-    df_climatefever = pd.DataFrame(climatefever)
+    if climatefever_file is not None:
+        df_climatefever = pd.read_parquet(climatefever_file)
+    else:
+        from datasets import load_dataset
+        df_climatefever = pd.DataFrame(load_dataset(climatefever_path, split="test"))
 
     # Remove NOT ENOUGH INFO claims and DISPUTED claims.
     df_climatefever = df_climatefever[(df_climatefever["claim_label"] != 2) & (df_climatefever["claim_label"] != 3)]
@@ -119,7 +121,7 @@ def process_raw_datasets() -> None:
     df_climatefever = pd.concat([df_climatefever, evidence_df], axis=1)
 
     # Save full cleaned ClimateFever.
-    climatefever_out = INTERIM_DIR / "cleaned_climatefever.csv"
+    climatefever_out = interim_dir / "cleaned_climatefever.csv"
     ensure_parent_dir(climatefever_out)
     df_climatefever.to_csv(climatefever_out, index=False)
     print("ClimateFever processed")
@@ -131,11 +133,11 @@ def process_raw_datasets() -> None:
 # Phase 2: Dataset standardization
 # ---------------------------------------------------------------------------
 
-def standardize_datasets() -> None:
+def standardize_datasets(interim_dir: Path, processed_dir: Path) -> None:
     # Load interim cleaned datasets.
-    df_hover = pd.read_csv(INTERIM_DIR / "cleaned_hover.csv")
-    df_feverous = pd.read_csv(INTERIM_DIR / "cleaned_feverous.csv")
-    df_climatefever = pd.read_csv(INTERIM_DIR / "cleaned_climatefever.csv")
+    df_hover = pd.read_csv(interim_dir / "cleaned_hover.csv")
+    df_feverous = pd.read_csv(interim_dir / "cleaned_feverous.csv")
+    df_climatefever = pd.read_csv(interim_dir / "cleaned_climatefever.csv")
 
     # Add dataset names for later analysis.
     df_hover["dataset"] = "Hover"
@@ -174,9 +176,9 @@ def standardize_datasets() -> None:
     print(df_climatefever["label"].value_counts())
 
     # Save standardized datasets.
-    hover_out = PROCESSED_DIR / "hover.csv"
-    feverous_out = PROCESSED_DIR / "feverous.csv"
-    climatefever_out = PROCESSED_DIR / "climatefever.csv"
+    hover_out = processed_dir / "hover.csv"
+    feverous_out = processed_dir / "feverous.csv"
+    climatefever_out = processed_dir / "climatefever.csv"
 
     ensure_parent_dir(hover_out)
     ensure_parent_dir(feverous_out)
@@ -223,11 +225,11 @@ def compute_correlation(data: pd.DataFrame) -> None:
     print(f"P-value: {p_value}")
 
 
-def analyze_processed_datasets() -> None:
+def analyze_processed_datasets(processed_dir: Path) -> None:
     # Load processed datasets.
-    df_hover = pd.read_csv(PROCESSED_DIR / "hover.csv")
-    df_feverous = pd.read_csv(PROCESSED_DIR / "feverous.csv")
-    df_climatefever = pd.read_csv(PROCESSED_DIR / "climatefever.csv")
+    df_hover = pd.read_csv(processed_dir / "hover.csv")
+    df_feverous = pd.read_csv(processed_dir / "feverous.csv")
+    df_climatefever = pd.read_csv(processed_dir / "climatefever.csv")
 
     # Print shapes to confirm sizes.
     print(f"Hover: {df_hover.shape}")
@@ -252,7 +254,7 @@ def analyze_processed_datasets() -> None:
     print(f"\nCombined dataset shape: {combined_df.shape}")
 
     # save combined_df to processed directory
-    combined_out = PROCESSED_DIR / "combined_datasets.csv"
+    combined_out = processed_dir / "combined_datasets.csv"
     ensure_parent_dir(combined_out)
     combined_df.to_csv(combined_out, index=False)
 
@@ -323,18 +325,28 @@ def analyze_processed_datasets() -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    """Run selected preprocessing steps based on flags."""
-    if RUN_RAW_PROCESSING:
-        process_raw_datasets()
-
-    if RUN_STANDARDIZATION:
-        standardize_datasets()
-
-    if RUN_ANALYSIS:
-        analyze_processed_datasets()
-
-    if not (RUN_RAW_PROCESSING or RUN_STANDARDIZATION or RUN_ANALYSIS):
-        print("No steps selected. Set a RUN_* flag to True.")
+    parser = ArgumentParser(description="Prepare the fact-checking experiment inputs.")
+    parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
+    parser.add_argument("--steps", nargs="+", choices=["raw", "standardize", "combine", "analyze"],
+                        default=["raw", "standardize", "combine"])
+    parser.add_argument("--climatefever-file", type=Path,
+                        help="Optional local raw ClimateFEVER Parquet; otherwise load the official HF test split")
+    args = parser.parse_args()
+    raw_dir = args.data_dir / "raw"
+    interim_dir = args.data_dir / "interim"
+    processed_dir = args.data_dir / "processed"
+    if "raw" in args.steps:
+        process_raw_datasets(raw_dir, interim_dir, args.climatefever_file)
+    if "standardize" in args.steps:
+        standardize_datasets(interim_dir, processed_dir)
+    if "combine" in args.steps:
+        frames = [pd.read_csv(processed_dir / f"{name}.csv")
+                  for name in ["climatefever", "feverous", "hover"]]
+        output = processed_dir / "combined_datasets.csv"
+        pd.concat(frames, ignore_index=True).to_csv(output, index=False)
+        print(f"Saved combined dataset: {output}")
+    if "analyze" in args.steps:
+        analyze_processed_datasets(processed_dir)
 
 
 if __name__ == "__main__":

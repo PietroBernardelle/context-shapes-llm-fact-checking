@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from evaluation_utils import macro_f1_from_counts
 from prompt_utils import project_root
 
 
@@ -294,7 +295,7 @@ def main() -> None:
 
     for model_dir in sorted([p for p in results_dir.iterdir() if p.is_dir()]):
         all_pqts = sorted(model_dir.glob("*.pqt"))
-        claim_files = [f for f in all_pqts if f.name != "res_multi_no_filler.pqt"]
+        claim_files = [f for f in all_pqts if f.name == "res_claim_only_no_filler.pqt"]
         multi_files = [f for f in all_pqts if f.name == "res_multi_no_filler.pqt"]
 
         if claim_files:
@@ -316,7 +317,7 @@ def main() -> None:
 
             if totals["total"] > 0:
                 accuracy = safe_ratio(totals["correct"], totals["valid"])
-                f1 = safe_ratio(2 * totals["tp"], (2 * totals["tp"] + totals["fp"] + totals["fn"]))
+                f1 = macro_f1_from_counts(totals)
                 overall_rows.append(
                     {
                         "Model": model_dir.name,
@@ -325,17 +326,14 @@ def main() -> None:
                         "Valid": str(totals["valid"]),
                         "Invalid": str(totals["invalid"]),
                         "Accuracy": format_metric(accuracy),
-                        "F1": format_metric(f1),
+                        "Macro-F1": format_metric(f1),
                     }
                 )
 
                 for dataset_key in sorted(dataset_totals.keys()):
                     ds_counts = dataset_totals[dataset_key]
                     ds_accuracy = safe_ratio(ds_counts["correct"], ds_counts["valid"])
-                    ds_f1 = safe_ratio(
-                        2 * ds_counts["tp"],
-                        (2 * ds_counts["tp"] + ds_counts["fp"] + ds_counts["fn"]),
-                    )
+                    ds_f1 = macro_f1_from_counts(ds_counts)
                     dataset_rows.append(
                         {
                             "Model": model_dir.name,
@@ -345,17 +343,14 @@ def main() -> None:
                             "Valid": str(ds_counts["valid"]),
                             "Invalid": str(ds_counts["invalid"]),
                             "Accuracy": format_metric(ds_accuracy),
-                            "F1": format_metric(ds_f1),
+                            "Macro-F1": format_metric(ds_f1),
                         }
                     )
 
                 for dataset_key in ordered_dataset_keys(dataset_totals_norm, dataset_order):
                     ds_counts = dataset_totals_norm[dataset_key]
                     ds_accuracy = safe_ratio(ds_counts["correct"], ds_counts["valid"])
-                    ds_f1 = safe_ratio(
-                        2 * ds_counts["tp"],
-                        (2 * ds_counts["tp"] + ds_counts["fp"] + ds_counts["fn"]),
-                    )
+                    ds_f1 = macro_f1_from_counts(ds_counts)
                     ds_name = dataset_display_map.get(dataset_key, dataset_key)
                     claim_metrics[(model_dir.name, ds_name)] = {"accuracy": ds_accuracy, "f1": ds_f1}
 
@@ -367,7 +362,7 @@ def main() -> None:
                             "Valid": str(ds_counts["valid"]),
                             "Invalid": str(ds_counts["invalid"]),
                             "Accuracy": format_metric(ds_accuracy),
-                            "F1": format_metric(ds_f1),
+                            "Macro-F1": format_metric(ds_f1),
                         }
                     )
 
@@ -406,10 +401,7 @@ def main() -> None:
             for dataset_key in ordered_dataset_keys(dataset_totals_norm, dataset_order):
                 ds_counts = dataset_totals_norm[dataset_key]
                 ds_accuracy = safe_ratio(ds_counts["correct"], ds_counts["valid"])
-                ds_f1 = safe_ratio(
-                    2 * ds_counts["tp"],
-                    (2 * ds_counts["tp"] + ds_counts["fp"] + ds_counts["fn"]),
-                )
+                ds_f1 = macro_f1_from_counts(ds_counts)
                 ds_name = dataset_display_map.get(dataset_key, dataset_key)
                 base_metrics = claim_metrics.get((model_dir.name, ds_name), {})
                 multi_final_rows.append(
@@ -419,7 +411,7 @@ def main() -> None:
                         "Rows": str(ds_counts["total"]),
                         "Valid": str(ds_counts["valid"]),
                         "Accuracy": format_metric_diff(ds_accuracy, base_metrics.get("accuracy")),
-                        "F1": format_metric_diff(ds_f1, base_metrics.get("f1")),
+                        "Macro-F1": format_metric_diff(ds_f1, base_metrics.get("f1")),
                     }
                 )
 
@@ -446,7 +438,7 @@ def main() -> None:
     print_table(
         "Overall by model (subset-filtered)",
         overall_rows,
-        ["Model", "Files", "Rows", "Valid", "Invalid", "Accuracy", "F1"],
+        ["Model", "Files", "Rows", "Valid", "Invalid", "Accuracy", "Macro-F1"],
     )
 
     if dataset_rows:
@@ -454,7 +446,7 @@ def main() -> None:
         print_table(
             "By model and dataset (subset-filtered)",
             dataset_rows,
-            ["Model", "Dataset", "Files", "Rows", "Valid", "Invalid", "Accuracy", "F1"],
+            ["Model", "Dataset", "Files", "Rows", "Valid", "Invalid", "Accuracy", "Macro-F1"],
         )
     else:
         print("\nNo dataset breakdown available (missing dataset columns).")
@@ -464,7 +456,7 @@ def main() -> None:
         print_table(
             "Subset summary (per dataset)",
             final_rows,
-            ["Model", "Dataset", "Rows", "Valid", "Invalid", "Accuracy", "F1"],
+            ["Model", "Dataset", "Rows", "Valid", "Invalid", "Accuracy", "Macro-F1"],
         )
     else:
         print("\nNo subset summary rows generated.")
@@ -502,7 +494,7 @@ def main() -> None:
         print_table(
             "Subset summary (Value and Diff from Claim Only)",
             multi_final_rows,
-            ["Model", "Dataset", "Rows", "Valid", "Accuracy", "F1"],
+            ["Model", "Dataset", "Rows", "Valid", "Accuracy", "Macro-F1"],
         )
     else:
         print("\nNo multi result files found.")

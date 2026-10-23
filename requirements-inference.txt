@@ -1,0 +1,5 @@
+# Linux/NVIDIA environment. GPU inference has not been revalidated for this release.
+-r requirements.txt
+# vLLM version recorded in the original experiment logs.
+vllm==0.8.5.post1
+torch==2.6.0

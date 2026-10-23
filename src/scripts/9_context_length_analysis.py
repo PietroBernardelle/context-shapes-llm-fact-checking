@@ -10,6 +10,7 @@ from matplotlib.ticker import MultipleLocator
 import pandas as pd
 import seaborn as sns
 
+from evaluation_utils import macro_f1_from_counts, filter_configured_metrics
 from prompt_utils import project_root, ensure_parent_dir
 
 # -----------------------------------------------------------------------------
@@ -109,11 +110,11 @@ def safe_ratio(num: int, den: int) -> float:
 def accuracy_f1(df: pd.DataFrame) -> tuple[float, float, int, int]:
     c = compute_counts(df)
     acc = safe_ratio(c["correct"], c["valid"])
-    f1 = safe_ratio(2 * c["tp"], (2 * c["tp"] + c["fp"] + c["fn"]))
+    f1 = macro_f1_from_counts(c)
     return acc, f1, c["valid"], c["total"]
 
 def read_results_file(path: Path) -> pd.DataFrame:
-    return pd.read_parquet(path)
+    return pd.read_parquet(path, columns=["dataset", "label", "pred_label"])
 
 def build_metrics_dataframe(results_dir: Path, min_valid: int = 1) -> pd.DataFrame:
     records: list[dict[str, Any]] = []
@@ -376,29 +377,17 @@ def plot_context_analysis(
 
 def main():
     root = project_root()
-    results_dir = root.parent / "inference_results" # Default assumption based on other scripts usually
-    # But wait, looking at file structure:
-    # src/scripts/is where we are.
-    # project root is /scratch/user/s4784669/Needle_new
-    # Where are the results?
-    # In script 7, it does:
-    # parser.add_argument("--results-dir", type=Path, default=root / "results")
-    # Let's check workspace info to find results.
-    # Workspace info doesn't show a "results" or "inference_results" folder at top level explicitly in the truncated view.
-    # But script 7 implies it. I'll stick to a default like "results" relative to root, or require it.
-    # I'll try to find where results are.
-    
-    # Assuming standard path or user provided.
-    # I'll use argparse.
     import argparse
     parser = argparse.ArgumentParser(description="Analyze results by context length.")
     parser.add_argument("--results-dir", type=Path, default=root / "out" / "results" / "subset_seed42", help="Path to results directory")
-    parser.add_argument("--output-dir", type=Path, default=root / "images" / "context_length_analysis", help="Path to save plots")
+    parser.add_argument("--output-dir", type=Path, default=root / "out" / "figures" / "context_length_analysis", help="Path to save plots")
     parser.add_argument("--only-avg", action="store_true", help="Only compute and save the average plot")
     parser.add_argument("--xlabel-y", type=float, default=-0.1, help="Custom y-coordinate for the x-axis label")
     parser.add_argument("--ylabel-x", type=float, default=-0.07, help="Custom x-coordinate for the y-axis label")
     parser.add_argument("--exclude-32k", action="store_true", help="Exclude data with context length ~32k (29k-33k) from analysis")
     
+    parser.add_argument("--config", type=Path, default=root / "config/paper_config.json")
+    parser.add_argument("--all-positions", action="store_true", help="Historical diagnostic: average all available evidence positions")
     args = parser.parse_args()
     
     if not args.results_dir.exists():
@@ -410,6 +399,10 @@ def main():
     print(f"Reading results from: {args.results_dir}")
     df = build_metrics_dataframe(args.results_dir)
     
+    df = filter_configured_metrics(df, args.config, all_positions=args.all_positions)
+    if df.empty:
+        raise ValueError("No results match the selected experiment configuration")
+
     if args.exclude_32k:
         print("Excluding 32k context data...")
          # We already mapped 29k to 32768 in the extraction step, so we just filter 32768

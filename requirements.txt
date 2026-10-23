@@ -1,0 +1,10 @@
+# Analysis and preprocessing environment validated with Python 3.11.
+numpy==2.2.6
+pandas==2.3.0
+pyarrow==20.0.0
+scipy==1.15.3
+matplotlib==3.9.2
+seaborn==0.13.2
+scikit-learn==1.5.2
+datasets==3.6.0
+transformers==4.51.3

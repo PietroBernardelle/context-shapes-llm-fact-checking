@@ -13,11 +13,15 @@ def sample_balanced(
     n_per_label: int,
     seed: int,
 ) -> tuple[pd.DataFrame, dict[int, int]]:
+    if n_per_label <= 0:
+        raise ValueError("n_per_label must be positive")
     samples: list[pd.DataFrame] = []
     counts: dict[int, int] = {}
     for label in [0, 1]:
         subset = df[df["label"] == label]
-        take = min(n_per_label, len(subset))
+        if len(subset) < n_per_label:
+            raise ValueError(f"FEVEROUS label {label} has {len(subset)} rows; need {n_per_label}")
+        take = n_per_label
         counts[label] = take
         if take > 0:
             samples.append(subset.sample(n=take, random_state=seed))

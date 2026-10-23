@@ -153,7 +153,7 @@ def main() -> None:
     args = parser.parse_args()
 
     root = project_root()
-    config_path = Path(args.config) if args.config else root / "config" / "prompt_config.json"
+    config_path = Path(args.config) if args.config else root / "config" / "paper_config.json"
     config = load_prompt_config(config_path)
 
     # Validate model and load its tokenizer.
@@ -161,7 +161,7 @@ def main() -> None:
         raise ValueError(f"Model '{args.model}' not found in prompt_config.json")
 
     model_id = config["models"][args.model]["model_id"]
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, revision=config["models"][args.model].get("revision"))
 
     # Load dataset and filler text path.
     combined_path = root / config["paths"]["combined_df"]

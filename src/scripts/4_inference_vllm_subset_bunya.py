@@ -5,18 +5,13 @@ import json
 import re
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from vllm import LLM, SamplingParams
 
 import pandas as pd
-import torch
-from vllm import LLM, SamplingParams
-
-try:
-    # Newer vLLM versions
-    from vllm.sampling_params import GuidedDecodingParams
-except Exception:  # pragma: no cover
-    from vllm import GuidedDecodingParams
-
+from audit_results import check_coverage
 from prompt_utils import project_root, load_prompt_config, ensure_parent_dir, format_position
 
 
@@ -213,7 +208,12 @@ def run_inference_for_file(
     ensure_parent_dir(out_path)
 
     if out_path.exists() and not overwrite:
-        print(f"Skipping existing results: {out_path}")
+        existing = pd.read_parquet(out_path, columns=["dataset", "claim", "label", "pred_label"])
+        coverage = check_coverage(existing, df)
+        if not coverage.complete or len(existing) != len(df):
+            raise ValueError(f"Existing results are incomplete or inconsistent: {out_path}. "
+                             "Use --overwrite to rerun this condition.")
+        print(f"Skipping complete existing results: {out_path}")
         return
 
     prompts = [
@@ -240,7 +240,7 @@ def main() -> None:
     parser.add_argument(
         "--config",
         default=None,
-        help="Path to prompt_config.json (defaults to config/prompt_config.json)",
+        help="Path to configuration (default: config/paper_config.json)",
     )
     parser.add_argument(
         "--models",
@@ -316,8 +316,15 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    import torch
+    from vllm import LLM, SamplingParams
+    try:
+        from vllm.sampling_params import GuidedDecodingParams
+    except ImportError:
+        from vllm import GuidedDecodingParams
+
     root = project_root()
-    config_path = Path(args.config) if args.config else root / "config" / "prompt_config.json"
+    config_path = Path(args.config) if args.config else root / "config" / "paper_config.json"
     config = load_prompt_config(config_path)
 
     subset_file = (
@@ -424,9 +431,12 @@ def main() -> None:
                 "dtype": "auto",
                 "max_num_seqs": plan["max_num_seqs"],
                 "disable_log_stats": True,
-                "seed": 22,
+                "seed": config["inference"].get("seed", 22),
                 "max_model_len": plan["max_model_len"],
             }
+            if config["models"][model_name].get("revision"):
+                llm_kwargs["revision"] = config["models"][model_name]["revision"]
+                llm_kwargs["tokenizer_revision"] = config["models"][model_name]["revision"]
             llm = LLM(**llm_kwargs)
             tokenizer = llm.get_tokenizer()
 

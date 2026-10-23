@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from evaluation_utils import macro_f1_from_counts, filter_configured_metrics, read_subset_keys, filter_subset
 from prompt_utils import project_root, ensure_parent_dir
 
 
@@ -124,7 +125,7 @@ def safe_ratio(num: int, den: int) -> float:
 def accuracy_f1(df: pd.DataFrame) -> tuple[float, float, int, int]:
     c = compute_counts(df)
     acc = safe_ratio(c["correct"], c["valid"])
-    f1 = safe_ratio(2 * c["tp"], (2 * c["tp"] + c["fp"] + c["fn"]))
+    f1 = macro_f1_from_counts(c)
     return acc, f1, c["valid"], c["total"]
 
 
@@ -135,7 +136,7 @@ def format_metric(v: float) -> str:
 
 
 def read_results_file(path: Path) -> pd.DataFrame:
-    return pd.read_parquet(path)
+    return pd.read_parquet(path, columns=["dataset", "label", "pred_label"])
 
 
 def build_metrics_dataframe(
@@ -358,7 +359,7 @@ def plot_heatmap_single(
     save_figure(fig, output_dir, file_stem, formats, dpi)
 
 
-def get_baselines(model_name: str, results_root: Path, valid_claims: set[str] | None) -> dict[str, float]:
+def get_baselines(model_name: str, results_root: Path, valid_claims: set[tuple[str, str]] | None) -> dict[str, float]:
     baselines = {}
     # Files are expected in results_root / model_name / ...
     # Mapping: label -> filename
@@ -377,9 +378,9 @@ def get_baselines(model_name: str, results_root: Path, valid_claims: set[str] | 
             continue
         
         try:
-            df = pd.read_parquet(fpath)
+            df = pd.read_parquet(fpath, columns=["dataset", "claim", "label", "pred_label"])
             if valid_claims is not None and "claim" in df.columns:
-                df = df[df["claim"].isin(valid_claims)]
+                df = filter_subset(df, valid_claims)
             
             acc, f1, valid, _ = accuracy_f1(df)
             if valid > 0:
@@ -845,12 +846,14 @@ def main() -> None:
         action="store_true",
         help="Exclude data with context length ~32k (29k-33k) from analysis",
     )
+    parser.add_argument("--config", type=Path, default=project_root() / "config/paper_config.json")
+    parser.add_argument("--subset-file", type=Path, default=project_root() / "data/processed/experiment_subset_seed42.csv")
     args = parser.parse_args()
 
     root = project_root()
     results_dir = Path(args.results_dir) if args.results_dir else root / "out" / "results" / "subset_seed42"
     
-    base_output_dir = Path(args.output_dir) if args.output_dir else root / "images"
+    base_output_dir = Path(args.output_dir) if args.output_dir else root / "out" / "figures"
     if args.debug:
         base_output_dir = base_output_dir / "debug"
 
@@ -932,12 +935,17 @@ def main() -> None:
             )
             filler_df = filler_df[mask].copy()
 
+        filler_df = filter_configured_metrics(filler_df, args.config)
         filler_df = filler_df.sort_values(["model", "dataset", "filler_length", "evidence_position"])
 
         if filler_df.empty:
             raise SystemExit("No filler-positioning rows found (len/pos files).")
 
         save_table(filler_df, output_dir / "table_filler_metrics_per_file_dataset.csv")
+
+    filler_df = filter_configured_metrics(filler_df, args.config)
+    if filler_df.empty:
+        raise ValueError("No metrics match the selected experiment configuration")
 
     # Paper-facing summaries.
     model_summary = (
@@ -1018,15 +1026,7 @@ def main() -> None:
 
     
     # Load experiment subset for baseline filtering
-    subset_csv_path = root / "data" / "processed" / "experiment_subset_seed42.csv"
-    valid_claims = None
-    if subset_csv_path.exists():
-        try:
-             subset_df = pd.read_csv(subset_csv_path)
-             if "claim" in subset_df.columns:
-                 valid_claims = set(subset_df["claim"].astype(str).str.strip().unique())
-        except Exception as e:
-             print(f"Warning: Could not read subset CSV for baseline filtering ({subset_csv_path}): {e}")
+    valid_claims = read_subset_keys(args.subset_file)
 
     # Identical setup for ticks calculation for passing to plot functions
     fixed_ticks = None
