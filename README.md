@@ -25,11 +25,13 @@ python -m pip install -r requirements-inference.txt
 
 This pins vLLM 0.8.5.post1, observed in experiment logs, and its required PyTorch 2.6.0. Follow the [versioned vLLM installation instructions](https://docs.vllm.ai/en/v0.8.5/getting_started/installation/gpu.html) for compatible drivers and CUDA binaries. GPU inference has not been revalidated for this release. Allocate sufficient GPU memory and set `--tensor-parallel-size` to the allocated GPU count. Authenticate separately with Hugging Face for gated model access.
 
-## Data availability
+## Data and results availability
 
-Prepared datasets are not redistributed because redistribution permissions have not been confirmed. Users must obtain source datasets separately under their applicable terms. This describes this release; it does not claim the original datasets prohibit redistribution.
+To keep the repository lightweight, experiment data and full outputs are maintained separately from the code. The broader experiment archive contains approximately **111 GB of generated prompts** and **47 GB of prediction files**, including experiments beyond the paper's configuration.
 
-Dataset and generated-output directories contain empty placeholders. The original [filler passage](data/raw/filler/README.md) is included with separate attribution and licensing. No dataset rows, instantiated prompts, predictions, metrics CSVs, logs, or weights are included. [Data documentation](docs/data.md) describes input schemas, sources, and reconstruction limitations.
+Available experiment data and results can be provided by Pietro Bernardelle **upon reasonable request**, subject to the applicable source-data licenses and redistribution permissions. To request files, [open an issue](https://github.com/PietroBernardelle/context-shapes-llm-fact-checking/issues/new) specifying the datasets, models, and experimental conditions of interest.
+
+The [data guide](docs/data.md) links to the original datasets and describes the expected local inputs. [Prompt templates](prompts/README.md), the attributed [filler passage](data/raw/filler/README.md), and paper figures are included in this repository. See the [reproducibility notes](docs/reproducibility.md) for validation status and known limitations of the archived results.
 
 ## Configuration
 
