@@ -16,6 +16,6 @@ See [GitHub citation files](https://docs.github.com/en/repositories/managing-you
 
 Suggested wording after publication:
 
-> Code, experiment configurations, and figures are available at https://github.com/PietroBernardelle/context-shapes-llm-fact-checking. Prepared datasets are not redistributed; the repository documents required local inputs and original sources. The accompanying software version is archived at [version DOI].
+> Code, experiment configurations, prompt templates, filler input, and figures are available at https://github.com/PietroBernardelle/context-shapes-llm-fact-checking. Prepared datasets are not redistributed; the repository documents required local inputs and original sources. The accompanying software version is archived at [version DOI].
 
 Omit the last sentence until a DOI exists. Do not claim a complete reproduction package while the documented preparation and validation gaps remain.

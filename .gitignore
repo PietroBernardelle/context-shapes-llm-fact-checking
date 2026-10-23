@@ -1,4 +1,4 @@
-# Only the explicitly listed code, configuration, figures, and empty placeholders are trackable.
+# Only the explicitly listed code, configuration, templates, filler, figures, and placeholders are trackable.
 # Dataset contents, generated prompts, predictions, metrics, logs, caches, and archives stay local.
 *
 !/config/
@@ -67,3 +67,10 @@
 !/docs/release.md
 !/out/figures/.gitkeep
 !/out/tables/.gitkeep
+!/prompts/
+!/prompts/README.md
+!/prompts/system.txt
+!/prompts/user.txt
+!/prompts/claim_only.txt
+!/data/raw/filler/llama.txt
+!/data/raw/filler/README.md

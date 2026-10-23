@@ -18,6 +18,11 @@ Invalid predictions are excluded from metric denominators as in the historical p
 - The manuscript calls ClimateFEVER's available split the training set. The archived code and author-maintained dataset call it `test`; reconcile this naming difference.
 - Exact prepared-data provenance, filler article revision, and model revision hashes were not recovered. Model repository names are not immutable historical checkpoints.
 
+The original filler input has been recovered and is included byte-for-byte with
+[attribution and a checksum](../data/raw/filler/README.md). Its literal escape
+sequences are preserved. This fixes the local filler input without recovering the
+upstream article revision or resolving the other provenance gaps.
+
 ## Environment and validation boundaries
 
 Original logs identify vLLM 0.8.5.post1, seed 22, and BF16 loading. A launcher requested CUDA 12.6 and an H100 allocation; that is not proof of the hardware used for every model. The current cluster environment has changed and is not treated as a historical lockfile.

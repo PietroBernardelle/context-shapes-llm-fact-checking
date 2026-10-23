@@ -1,6 +1,6 @@
 # Context Shapes LLMs Retrieval-Augmented Fact-Checking Effectiveness
 
-Code and figures for the paper by Pietro Bernardelle, Stefano Civelli, Kevin Roitero, and Gianluca Demartini.
+Code, prompt templates, filler input, and figures for the paper by Pietro Bernardelle, Stefano Civelli, Kevin Roitero, and Gianluca Demartini.
 
 **Status: private release candidate.** CPU regression tests and execution commands are provided. Full GPU reruns and reconciliation of the manuscript results are pending. Read the [reproducibility notes](docs/reproducibility.md) before using this as an exact reproduction of the paper.
 
@@ -29,7 +29,7 @@ This pins vLLM 0.8.5.post1, observed in experiment logs, and its required PyTorc
 
 Prepared datasets are not redistributed because redistribution permissions have not been confirmed. Users must obtain source datasets separately under their applicable terms. This describes this release; it does not claim the original datasets prohibit redistribution.
 
-Data, prompt, and result directories contain empty placeholders. No dataset rows, filler passage, predictions, metrics CSVs, logs, or weights are included. [Data documentation](docs/data.md) describes input schemas, sources, and reconstruction limitations.
+Dataset and generated-output directories contain empty placeholders. The original [filler passage](data/raw/filler/README.md) is included with separate attribution and licensing. No dataset rows, instantiated prompts, predictions, metrics CSVs, logs, or weights are included. [Data documentation](docs/data.md) describes input schemas, sources, and reconstruction limitations.
 
 ## Configuration
 
@@ -44,6 +44,10 @@ Scripts default to `config/paper_config.json`:
 `config/prompt_config.json` retains the original broader settings for provenance. Original model revision hashes were not recovered. Optional `revision` values in each model's configuration are passed to model and tokenizer loading when supplied.
 
 ## Prepare inputs and prompts
+
+The [prompt templates](prompts/README.md) provide the exact system instructions,
+claim-only template, and claim-with-context template as readable text files.
+Scripts read the matching strings from `config/paper_config.json`.
 
 Run from the repository root after supplying the local inputs described in [docs/data.md](docs/data.md):
 
@@ -107,6 +111,6 @@ Both PNGs match every RGB pixel of the corresponding images embedded in the supp
 
 ## Citation and license
 
-See [CITATION.cff](CITATION.cff) and the [MIT license](LICENSE). Dataset and model terms remain separate. No DOI or final publication identifier is claimed yet. [Release instructions](docs/release.md) describe the remaining steps toward a public, citable version.
+See [CITATION.cff](CITATION.cff) and the [MIT license](LICENSE) for code and prompt templates. The Wikipedia-derived filler is separately licensed under [CC BY-SA 4.0](data/raw/filler/README.md). Dataset and model terms remain separate. No DOI or final publication identifier is claimed yet. [Release instructions](docs/release.md) describe the remaining steps toward a public, citable version.
 
 The original snapshot is commit `1e149ae04f7b7bff2dc45c2d2ebfda5e78e69f8d`. [CHANGELOG.md](CHANGELOG.md) identifies subsequent corrections.

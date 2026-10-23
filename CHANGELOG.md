@@ -1,5 +1,11 @@
 # Changes
 
+## Unreleased
+
+- Standalone system and user prompt templates, with generation and chat-formatting documentation.
+- Original filler input preserved byte-for-byte, with Wikipedia attribution, CC BY-SA licensing, and a checksum.
+- Updated input documentation to distinguish included resources from locally supplied datasets.
+
 ## 0.1.0-rc.1 - 2026-10-23
 
 - MIT license, citation metadata, setup instructions, pinned analysis dependencies, and data/release documentation.
